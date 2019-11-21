@@ -2,11 +2,25 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
+const fetch = require('node-fetch');
 
 //User model
 const User = require('../models/User');
 //Login page
-router.get('/login', (req, res) => res.render('Login'));
+router.get('/login', (req, res, next) => {
+    var challenge = req.query['login_challenge'];
+    fetch(`http://localhost:4445/oauth2/auth/requests/login?login_challenge=${challenge}`)
+        .then(response => response.json())
+        .then(response => {
+            var subject = response.subject
+            if (subject == '') {
+                res.render('Login', { 'login_challenge': challenge });
+            }
+
+        });
+
+
+});
 
 //Register page
 router.get('/register', (req, res) => res.render('Register'));
