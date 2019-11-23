@@ -3,27 +3,83 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const fetch = require('node-fetch');
+const querystring = require('querystring')
+const { ensureAuthenticated } = require('../config/auth');
+
 
 //User model
 const User = require('../models/User');
 //Login page
 router.get('/login', (req, res, next) => {
     var challenge = req.query['login_challenge'];
-    fetch(`http://localhost:4445/oauth2/auth/requests/login?login_challenge=${challenge}`)
+    fetch('http://localhost:4445/oauth2/auth/requests/login?' + querystring.stringify({ login_challenge: challenge }))
         .then(response => response.json())
         .then(response => {
             var subject = response.subject
+
             if (subject == '') {
                 res.render('Login', { 'login_challenge': challenge });
+            }
+
+            else {
+                res.redirect(response.client.redirect_uris[0]);
             }
 
         });
 
 
 });
+//login Handle
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', {
+        successRedirect: '/auth/login?login_challenge=' + req.body['login_challenge'],
+        failureRedirect: '/login',
+        failureFlash: true,
 
-//Register page
-router.get('/register', (req, res) => res.render('Register'));
+    })(req, res, next);
+});
+
+
+
+//Logout Page
+router.get('/logout', ensureAuthenticated, (req, res) => {
+    var challenge = req.query['logout_challenge'];
+    fetch('http://localhost:4445/oauth2/auth/requests/logout?' + querystring.stringify({ logout_challenge: challenge }), {})
+        .then((response) => response.json())
+        .then(response => {
+            console.log('respuesta en logout GET', response);
+            var subject = response.subject
+            if (subject != '') {
+                res.render('Logout', { 'logout_challenge': challenge });
+            }
+        });
+});
+
+//logout handle
+router.post('/logout', (req, res) => {
+    var challenge = req.body['logout_challenge']
+
+    req.logout();
+    fetch(
+        'http://localhost:4445/oauth2/auth/requests/logout/accept?' +
+        querystring.stringify({ logout_challenge: challenge }),
+        {
+            method: 'PUT',
+        }
+    )
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (response) {
+            console.log('respuesta en logout post para el challenge' + challenge, response);
+
+            // The response will contain a `redirect_to` key which contains the URL where the user's user agent must be redirected to next.
+            res.redirect(response.redirect_to);
+        });
+
+
+});
+
 
 //Register Handle
 router.post('/register', (req, res) => {
@@ -100,22 +156,8 @@ router.post('/register', (req, res) => {
 
 });
 
-//login Handle
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local', {
-        successRedirect: '/dashboard',
-        failureRedirect: '/users/login',
-        failureFlash: true,
+//Register page
+router.get('/register', (req, res) => res.render('Register'));
 
-    })(req, res, next);
-});
-
-//logout handle
-router.get('/logout', (req, res) => {
-
-    req.logout();
-    req.flash('success_msg', 'You are logged out');
-    res.redirect('/users/login');
-});
 
 module.exports = router;

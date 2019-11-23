@@ -1,0 +1,17 @@
+<div class="row mt-5">
+    <div class="col-md-6 m-auto">
+        <div class="card card-body">
+            <h1 class="text-center mb-3"><i class="fas fa-sign-out-alt"></i> Logout</h1>
+            <% include ./partials/messages %>
+
+            <form action="/users/logout" method="POST">
+
+
+
+                <input type="hidden" id="logout_challenge" name="logout_challenge" value="<%= logout_challenge %>">
+                <button type="submit" class="btn btn-primary btn-block">Logout</button>
+            </form>
+
+        </div>
+    </div>
+</div>
