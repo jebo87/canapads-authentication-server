@@ -12,7 +12,7 @@ const User = require('../models/User');
 //Login page
 router.get('/login', (req, res, next) => {
     var challenge = req.query['login_challenge'];
-    fetch('http://localhost:4445/oauth2/auth/requests/login?' + querystring.stringify({ login_challenge: challenge }))
+    fetch('http://***REMOVED***/oauth2/auth/requests/login?' + querystring.stringify({ login_challenge: challenge }))
         .then(response => response.json())
         .then(response => {
             var subject = response.subject
@@ -44,7 +44,7 @@ router.post('/login', (req, res, next) => {
 //Logout Page
 router.get('/logout', ensureAuthenticated, (req, res) => {
     var challenge = req.query['logout_challenge'];
-    fetch('http://localhost:4445/oauth2/auth/requests/logout?' + querystring.stringify({ logout_challenge: challenge }), {})
+    fetch('http://***REMOVED***/oauth2/auth/requests/logout?' + querystring.stringify({ logout_challenge: challenge }), {})
         .then((response) => response.json())
         .then(response => {
             console.log('respuesta en logout GET', response);
@@ -61,7 +61,7 @@ router.post('/logout', (req, res) => {
 
     req.logout();
     fetch(
-        'http://localhost:4445/oauth2/auth/requests/logout/accept?' +
+        'http://***REMOVED***/oauth2/auth/requests/logout/accept?' +
         querystring.stringify({ logout_challenge: challenge }),
         {
             method: 'PUT',
@@ -83,7 +83,9 @@ router.post('/logout', (req, res) => {
 
 //Register Handle
 router.post('/register', (req, res) => {
-    const { name, email, password, password2 } = req.body;
+
+
+    const { name, email, password, password2, login_challenge } = req.body;
 
     let errors = [];
 
@@ -108,7 +110,8 @@ router.post('/register', (req, res) => {
             name,
             email,
             password,
-            password2
+            password2,
+            login_challenge
 
         });
     } else {
@@ -123,7 +126,8 @@ router.post('/register', (req, res) => {
                         name,
                         email,
                         password,
-                        password2
+                        password2,
+                        login_challenge
 
                     });
                 } else {
@@ -141,15 +145,10 @@ router.post('/register', (req, res) => {
                         newUser.save()
                             .then(user => {
                                 req.flash('success_msg', 'You are now registered and can login');
-                                res.redirect('/users/login');
+                                res.redirect('/users/login?' + querystring.stringify({ login_challenge: login_challenge }));
 
                             })
                     }));
-
-
-
-
-
                 }
             });
     }
@@ -157,7 +156,10 @@ router.post('/register', (req, res) => {
 });
 
 //Register page
-router.get('/register', (req, res) => res.render('Register'));
+router.get('/register', (req, res) => {
+
+    res.render('Register', { 'login_challenge': req.query['login_challenge'] });
+});
 
 
 module.exports = router;

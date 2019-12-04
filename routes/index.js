@@ -20,7 +20,7 @@ router.get('/login', ensureAuthenticated, (req, res) => {
         remember_for: 60,
     }
 
-    fetch('http://localhost:4445/oauth2/auth/requests/login/accept?' + querystring.stringify({ login_challenge: challenge }), {
+    fetch('http://***REMOVED***/oauth2/auth/requests/login/accept?' + querystring.stringify({ login_challenge: challenge }), {
         method: 'PUT',
         body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' }
@@ -39,7 +39,7 @@ router.get('/login', ensureAuthenticated, (req, res) => {
 //consent challenge handle
 router.get('/consent', ensureAuthenticated, (req, res) => {
     var challenge = req.query['consent_challenge'];
-    fetch('http://localhost:4445/oauth2/auth/requests/consent?' + querystring.stringify({ consent_challenge: challenge })).
+    fetch('http://***REMOVED***/oauth2/auth/requests/consent?' + querystring.stringify({ consent_challenge: challenge })).
         then(function (response) {
             return response.json()
         }).
@@ -59,7 +59,7 @@ router.get('/consent', ensureAuthenticated, (req, res) => {
         }
     };
 
-    fetch('http://localhost:4445/oauth2/auth/requests/consent/accept?' + querystring.stringify({ consent_challenge: challenge }), {
+    fetch('http://***REMOVED***/oauth2/auth/requests/consent/accept?' + querystring.stringify({ consent_challenge: challenge }), {
         method: 'PUT',
         body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' }

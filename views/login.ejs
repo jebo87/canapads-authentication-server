@@ -15,11 +15,11 @@
                     <input type="password" id="password" name="password" class="form-control"
                         placeholder="Enter Password" />
                 </div>
-                <input type="hidden" id="login_challenge" name="login_challenge" value="<%= login_challenge %>">
+                <input type="hidden" id="login_challenge" name="login_challenge" value="<%= login_challenge %>" />
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
             </form>
             <p class="lead mt-4">
-                No Account? <a href="/users/register">Register</a>
+                No Account? <a href="/users/register?login_challenge=<%= login_challenge %>">Register</a>
             </p>
         </div>
     </div>
