@@ -5,14 +5,23 @@ const passport = require('passport');
 const fetch = require('node-fetch');
 const querystring = require('querystring')
 const { ensureAuthenticated } = require('../config/auth');
-
+const https = require("https");
+const agent = new https.Agent({
+    rejectUnauthorized: false
+})
 
 //User model
 const User = require('../models/User');
 //Login page
 router.get('/login', (req, res, next) => {
     var challenge = req.query['login_challenge'];
-    fetch('http://***REMOVED***/oauth2/auth/requests/login?' + querystring.stringify({ login_challenge: challenge }))
+    if (!challenge) {
+        res.redirect('https://www.canapads.ca');
+    }
+    fetch('https://***REMOVED***/oauth2/auth/requests/login?' + querystring.stringify({ login_challenge: challenge }),
+        {
+            agent
+        })
         .then(response => response.json())
         .then(response => {
             var subject = response.subject
@@ -31,12 +40,32 @@ router.get('/login', (req, res, next) => {
 });
 //login Handle
 router.post('/login', (req, res, next) => {
-    passport.authenticate('local', {
-        successRedirect: '/auth/login?login_challenge=' + req.body['login_challenge'],
-        failureRedirect: '/login',
-        failureFlash: true,
 
-    })(req, res, next);
+    const { email, password, login_challenge } = req.body;
+
+    let errors = [];
+
+    //check required fields
+    if (!email || !password) {
+        errors.push({ msg: 'Please fill in all fields' });
+    }
+
+    if (errors.length > 0) {
+        res.render('login', {
+            errors,
+            login_challenge
+
+        });
+    } else {
+
+
+        passport.authenticate('local', {
+            successRedirect: '/auth/login?login_challenge=' + req.body['login_challenge'],
+            failureRedirect: '/users/login?login_challenge=' + req.body['login_challenge'],
+            failureFlash: true,
+
+        })(req, res, next);
+    }
 });
 
 
@@ -44,38 +73,75 @@ router.post('/login', (req, res, next) => {
 //Logout Page
 router.get('/logout', ensureAuthenticated, (req, res) => {
     var challenge = req.query['logout_challenge'];
-    fetch('http://***REMOVED***/oauth2/auth/requests/logout?' + querystring.stringify({ logout_challenge: challenge }), {})
+
+    if (!challenge) {
+        console.log('no logout challenge received');
+        res.redirect('https://www.canapads.ca');
+
+    } else {
+        console.log('challenge received', challenge);
+    }
+    fetch('https://***REMOVED***/oauth2/auth/requests/logout?' + querystring.stringify({ logout_challenge: challenge }), { agent })
         .then((response) => response.json())
         .then(response => {
-            console.log('respuesta en logout GET', response);
+            console.log('respuesta en logout GET');
             var subject = response.subject
             if (subject != '') {
-                res.render('Logout', { 'logout_challenge': challenge });
+                //in case you want a logout page confirmation
+                //res.render('Logout', { 'logout_challenge': challenge });
+
+                //otherwise
+                const body = {
+                    'logout_challenge': challenge
+                };
+                fetch('https://auth.canapads.ca/users/logout', {
+                    method: 'POST',
+                    agent,
+                    body: JSON.stringify(body),
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(function (response) {
+                        console.log('1 logged out and redirecting to ', response.redirect_to);
+
+                        return response.json()
+                    }).then(function (response) {
+                        console.log('2 logged out and redirecting to ', response.redirect_to);
+                        // The response will contain a `redirect_to` key which contains the URL where the user's user agent must be redirected to next.
+                        res.redirect(response.redirect_to);
+                    }).catch(err => console.log(err));
             }
         });
 });
 
 //logout handle
 router.post('/logout', (req, res) => {
-    var challenge = req.body['logout_challenge']
-
+    var challenge = req.body['logout_challenge'];
+    console.log('challenge en el post logout', req.body);
+    // if (!challenge) {
+    //     res.redirect('http://www.canapads.ca');
+    // }
     req.logout();
     fetch(
-        'http://***REMOVED***/oauth2/auth/requests/logout/accept?' +
+        'https://***REMOVED***/oauth2/auth/requests/logout/accept?' +
         querystring.stringify({ logout_challenge: challenge }),
         {
             method: 'PUT',
+            agent
         }
-    )
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (response) {
-            console.log('respuesta en logout post para el challenge' + challenge, response);
+    ).then(function (response) {
+        return response.json();
+    }).then(function (response) {
+        console.log('respuesta en logout post para el challenge' + challenge);
 
-            // The response will contain a `redirect_to` key which contains the URL where the user's user agent must be redirected to next.
-            res.redirect(response.redirect_to);
-        });
+        // The response will contain a `redirect_to` key which contains the URL where the user's user agent must be redirected to next.
+        //If we are showing a consent page
+        console.log(response);
+        //res.redirect(response.redirect_to);
+
+        res.send(response);
+
+
+    }).catch(err => console.log(err));
 
 
 });
