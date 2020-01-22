@@ -15,14 +15,17 @@ router.get('/', (req, res) => {
 
 //Login authenticated handle. This is loaded after the user has successfully logged in 
 router.get('/login', ensureAuthenticated, (req, res) => {
+    console.log('user authenticated with identity provider');
     var challenge = req.query['login_challenge'];
 
     const body = {
         subject: req.user._id,
         remember: true,
-        remember_for: 1,
+        remember_for: 20,
+
     }
 
+    console.log('Attempting login in Auth server...');
     fetch('https://***REMOVED***/oauth2/auth/requests/login/accept?' + querystring.stringify({ login_challenge: challenge }), {
         method: 'PUT',
         body: JSON.stringify(body),
@@ -32,7 +35,8 @@ router.get('/login', ensureAuthenticated, (req, res) => {
         return response.json()
     }).then(function (response) {
         // The response will contain a `redirect_to` key which contains the URL where the user's user agent must be redirected to next.
-
+        console.log(`login accepted in auth server for login_challenge ${challenge}`)
+        console.log(response);
         res.redirect(response.redirect_to);
     }).catch(err => console.log(err))
 });
@@ -48,7 +52,7 @@ router.get('/consent', ensureAuthenticated, (req, res) => {
         }).then(function (response) {
             return response.json()
         }).then(function (response) {
-            console.log("requesting consent.", response);
+            console.log("requesting consent.");
         }).catch(err => console.log(err))
 
     //define the grants for the user
@@ -56,7 +60,7 @@ router.get('/consent', ensureAuthenticated, (req, res) => {
         grant_scope: ["openid", "profile", "api1"],
         grant_access_token_audience: ["openid", "profile", "api1"],
         remember: true,
-        remember_for: 3,
+        remember_for: 20,
         session: {
             id_token: {
                 'name': req.user.email

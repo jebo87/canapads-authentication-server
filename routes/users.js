@@ -6,15 +6,17 @@ const fetch = require('node-fetch');
 const querystring = require('querystring')
 const { ensureAuthenticated } = require('../config/auth');
 const https = require("https");
+//TODO change this to work with real certificates
 const agent = new https.Agent({
     rejectUnauthorized: false
-})
+});
 
 //User model
 const User = require('../models/User');
 //Login page
 router.get('/login', (req, res, next) => {
     var challenge = req.query['login_challenge'];
+    console.log(`initiating login_challenge for ${challenge}`);
     if (!challenge) {
         res.redirect('https://www.canapads.ca');
     }
@@ -31,7 +33,9 @@ router.get('/login', (req, res, next) => {
             }
 
             else {
-                res.redirect(response.client.redirect_uris[0]);
+                console.log(`Subject is known: ${subject} redirect to ${response.client.redirect_uris[0]}`);
+                console.log(response);
+                res.redirect('/auth/login?=' + querystring.stringify({ login_challenge: challenge }));
             }
 
         });
