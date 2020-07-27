@@ -25,7 +25,8 @@ router.get('/login', ensureAuthenticated, (req, res) => {
 
 	console.log('Attempting login in Auth server...');
 	fetch(
-		'https://***REMOVED***/oauth2/auth/requests/login/accept?' +
+		process.env.OAUTH2_SERVER +
+			'oauth2/auth/requests/login/accept?' +
 			querystring.stringify({ login_challenge: challenge }),
 		{
 			method: 'PUT',
@@ -51,7 +52,8 @@ router.get('/login', ensureAuthenticated, (req, res) => {
 router.get('/consent', ensureAuthenticated, (req, res) => {
 	var challenge = req.query['consent_challenge'];
 	fetch(
-		'https://***REMOVED***/oauth2/auth/requests/consent?' +
+		process.env.OAUTH2_SERVER +
+			'oauth2/auth/requests/consent?' +
 			querystring.stringify({ consent_challenge: challenge }),
 		{
 			agent
@@ -80,7 +82,8 @@ router.get('/consent', ensureAuthenticated, (req, res) => {
 	};
 
 	fetch(
-		'https://***REMOVED***/oauth2/auth/requests/consent/accept?' +
+		process.env.OAUTH2_SERVER +
+			'oauth2/auth/requests/consent/accept?' +
 			querystring.stringify({ consent_challenge: challenge }),
 		{
 			method: 'PUT',
